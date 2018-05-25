@@ -2,8 +2,6 @@
 .piolibdeps
 .clang_complete
 .gcc-flags.json
-config.h
-platformio.ini
 node_modules
 yarn.lock
 package-lock.json
