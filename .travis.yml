@@ -33,34 +33,49 @@ cache:
     directories:
         - "~/.platformio"
 
+
+env:
+    matrix:
+      - BUILD_PLATFORM='PLATFORMIO'
+      - BUILD_PLATFORM='ARDUINO_IDE'
+
+
 install:
-    - pip install -U platformio
+    # install PlatformIO
+    - if [ $BUILD_PLATFORM == 'PLATFORMIO' ]; then
+        pip install -U platformio;
+      fi
+
+
+    # Install the CI helper script for the Arduino IDE
+    - if [ "$BUILD_PLATFORM" == "ARDUINO_IDE" ]; then
+        git clone https://github.com/per1234/arduino-ci-script.git "${HOME}/scripts";
+        cd "${HOME}/scripts";
+        git fetch --tags;
+        git checkout $(git describe --tags `git rev-list --tags --max-count=1`);
+        source "${HOME}/scripts/arduino-ci-script.sh";
+        cd "$TRAVIS_BUILD_DIR";
+        set_application_folder "${HOME}/arduino-ide";
+        set_sketchbook_folder "${HOME}/arduino-sketchbook";
+        install_ide '1.8.5';
+        install_package 'esp8266:esp8266' 'http://arduino.esp8266.com/stable/package_esp8266com_index.json';
+        install_library 'https://github.com/xoseperez/my9291.git' '2.0.0';
+        install_library 'ArduinoJson';
+        install_library 'https://github.com/marvinroger/async-mqtt-client.git' 'v0.8.1';
+        install_library 'https://github.com/me-no-dev/ESPAsyncTCP/archive/master.zip';
+        install_library 'https://github.com/me-no-dev/ESPAsyncWebServer/archive/master.zip';
+      fi
 
 script:
-    - platformio run -e dev
-    - platformio run -e prod
+    # Build AiLight using PlatformIO
+    - if [ $BUILD_PLATFORM == 'PLATFORMIO' ]; then
+        platformio run -e dev;
+      fi
+    - if [ $BUILD_PLATFORM == 'PLATFORMIO' ]; then
+        platformio run -e prod;
+      fi
 
-
-#
-# Template #2: The project is intended to by used as a library with examples
-#
-
-# language: python
-# python:
-#     - "2.7"
-#
-# sudo: false
-# cache:
-#     directories:
-#         - "~/.platformio"
-#
-# env:
-#     - PLATFORMIO_CI_SRC=path/to/test/file.c
-#     - PLATFORMIO_CI_SRC=examples/file.ino
-#     - PLATFORMIO_CI_SRC=path/to/test/directory
-#
-# install:
-#     - pip install -U platformio
-#
-# script:
-#     - platformio ci --lib="." --board=ID_1 --board=ID_2 --board=ID_N
+    # Build AiLight using Arduino IDE
+    - if [ $BUILD_PLATFORM == 'ARDUINO_IDE' ]; then
+        build_sketch "${TRAVIS_BUILD_DIR}/AiLight/AiLight.ino" 'esp8266:esp8266:esp8285:CpuFrequency=80,ResetMethod=ck,CrystalFreq=26,FlashSize=1M0,led=2,LwIPVariant=v2mss536,Debug=Disabled,DebugLevel=None____,FlashErase=none,UploadSpeed=115200' 'false';
+      fi
