@@ -41,7 +41,7 @@
 #define POWERUP_MODE POWERUP_OFF
 #endif
 
-#include "AiLight.hpp"
+#include "src/AiLight.hpp"
 #include "ArduinoOTA.h"
 #include <ArduinoJson.h>
 #include <AsyncMqttClient.h>
